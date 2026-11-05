@@ -120,13 +120,13 @@ Successful imports do not by themselves prove full training/evaluation reproduci
 
 ## Dataset
 
-The research uses **108 maize plants** represented as XYZRGB point clouds. The paper's evaluation includes **11 held-out test plants**. The final release should include the exact train/validation/test assignments and point-to-label mapping used for each experiment; do not infer the remaining split sizes from the total.
+The maize plant point cloud dataset used in this study is provided in the `data/` directory of this repository.
 
-- Dataset DOI or download URL: **TODO**
-- Sample metadata, point units, RGB scaling, semantic/instance label conventions: **TODO**
-- Exact train/validation/test lists and preprocessing procedure: **TODO**
+The dataset is intended for the training and evaluation of GAMQ-SegNet for semantic and instance segmentation of maize plants.
 
-Preserve the **full original sample IDs**, including suffixes such as `(1)`, `(2)` and `(3)`. Update the data-root settings in `configs/oneformer3d_corn_formal_rgb_full.py` after downloading the data. Do not use development-machine absolute paths for public examples.
+**Data Availability:** The dataset is included directly in this GitHub repository. No additional download from external cloud storage services is required.
+
+Please refer to the dataset configuration files in `configs/` for the corresponding data loading settings.
 
 ## Training
 
