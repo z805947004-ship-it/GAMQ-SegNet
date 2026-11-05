@@ -1,0 +1,24 @@
+# GAMQ-SegNet: documented core Conda environment (Windows / CUDA 11.8).
+# Derived from the author's working openmmlab environment exported 2026-11-05.
+# Install platform-sensitive OpenMMLab and sparse CUDA extensions as documented
+# in README.md after creating this environment.
+# This curated specification is not a tested, fully locked environment.
+name: gamq-segnet
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8.20
+  - pip
+  - pytorch=2.1.2
+  - pytorch-cuda=11.8
+  - torchvision=0.16.2
+  - torchaudio=2.1.2
+  - numpy=1.24.3
+  - scipy=1.10.1
+  - pandas=2.0.3
+  - pyyaml=6.0.2
+  - setuptools=60.2.0
+  - ninja
