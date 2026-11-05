@@ -1,0 +1,18 @@
+{
+  "sample_id": "384-26(2)",
+  "shared_roi_xy": [
+    -0.18742445890102433,
+    -0.07311642682835617,
+    -0.4422599724893397,
+    -0.3692298408873571
+  ],
+  "full_view_x_limits": [
+    -0.3748745454283004,
+    0.07940620545449345
+  ],
+  "full_view_y_limits": [
+    -0.6739660478953031,
+    -0.06825838005157797
+  ],
+  "note": "Projected GT XY ROI; same physical ROI, camera orientation, scale and inset for every model."
+}
