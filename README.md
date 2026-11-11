@@ -1,69 +1,54 @@
-# GAMQ-SegNet: Semantic and Instance Segmentation of 3D Maize Plants
+# GAMQ-SegNet: 3D Maize Plant Semantic and Instance Segmentation
 
-GAMQ-SegNet is a 3D point-cloud segmentation framework for maize plant structural analysis. It extends [OneFormer3D](https://github.com/filaPro/oneformer3d) with a **GAASE** module in the sparse-convolutional backbone and **AMSQF**-related modifications in the query decoder, targeting semantic and instance segmentation of maize stems and leaves.
+**Related research:** *Three-Dimensional Reconstruction and Organ Segmentation of Maize Seedlings Using a Three-Axis RGB-D Acquisition Platform and GAMQ-SegNet*
 
-> **Reproducibility status.** The environment versions below were taken from the author's running training environment on **5 November 2026**. The *curated, fresh-install instructions* have **not yet been independently validated** on a clean machine. Dataset, trained checkpoint and final publication links are pending. Do not treat the repository as a complete paper reproduction package until those are supplied and the installation and evaluation steps have been tested.
+GAMQ-SegNet is a 3D point-cloud segmentation method for maize stems and leaves, built on [OneFormer3D](https://github.com/filaPro/oneformer3d). It introduces **GAASE** (geometry-guided adaptive anisotropic sparse feature extraction) in the sparse-convolution backbone and **AMSQF** (adaptive multi-scale query fusion) in the query decoder.
 
-## Features
+This repository contains the **segmentation code, processed maize point-cloud data, and a trained checkpoint for evaluation**. The RGB-D acquisition platform and 2DGS reconstruction are part of the broader research workflow; raw RGB-D sequences are not included here.
 
-- XYZRGB point clouds for maize-plant segmentation.
-- Stem/leaf semantic segmentation and plant-part instance segmentation.
-- **GAASE** backbone implementation: `oneformer3d/spconv_unet.py`.
-- Query-decoder changes associated with **AMSQF**: `oneformer3d/query_decoder.py`.
-- Training, evaluation and prediction-export scripts derived from the OneFormer3D framework.
-
-## Repository structure
+## Repository layout
 
 ```text
 GAMQ-SegNet/
 ├── configs/
 │   └── oneformer3d_corn_formal_rgb_full.py
 ├── oneformer3d/
-│   ├── spconv_unet.py
-│   ├── query_decoder.py
-│   ├── oneformer3d.py
+│   ├── spconv_unet.py          # GAASE
+│   ├── query_decoder.py       # AMSQF
 │   └── ...
 ├── tools/
 │   ├── train.py
 │   ├── test.py
-│   ├── infer_save_ply_corn.py
+│   └── infer_save_ply_corn.py
+├── data/                       # Maize point-cloud dataset
+│   ├── 1149-1(2)_pts.npy
+│   ├── 1149-1(2)_sem.npy
+│   ├── 1149-1(2)_ins.npy
 │   └── ...
+├── work_dirs/
+│   └── oneformer3d-full-new/
+│       └── best_all_ap_50%_epoch_660.pth
 ├── environment.yml
 ├── requirements.txt
-├── README.md
-└── LICENSE
+├── LICENSE
+└── README.md
 ```
 
-The `oneformer3d` package name is kept to preserve the upstream import paths.
+## Environment
 
-## Experimental environment
+The experiments were conducted on **Windows** with an **NVIDIA GeForce RTX 4060 Laptop GPU**.
 
-The following versions were **observed in the working Windows environment**; they are *not* the versions in OneFormer3D's original Docker image.
-
-| Component | Recorded version |
+| Package | Version |
 |---|---|
-| OS | Windows (author's environment) |
-| Python | **3.8.20** |
-| PyTorch | **2.1.2** |
-| PyTorch CUDA runtime | **11.8** |
-| torchvision / torchaudio | **0.16.2 / 2.1.2** |
-| MMCV | **2.1.0** |
-| MMEngine | **0.10.7** |
-| MMDetection | **3.3.0** |
-| MMDetection3D | **1.4.0** (locally editable installation) |
-| SpConv / cumm | **spconv-cu118 2.3.6 / cumm-cu118 0.4.11** |
-| torch-scatter | **2.1.2+pt21cu118** |
-| NumPy | **1.24.3** |
-| Open3D | **0.19.0** |
-| GPU used by the author | **NVIDIA GeForce RTX 4060 Laptop GPU** |
+| Python | 3.8.20 |
+| PyTorch / CUDA runtime | 2.1.2 / 11.8 |
+| MMCV / MMEngine | 2.1.0 / 0.10.7 |
+| MMDetection / MMDetection3D | 3.3.0 / 1.4.0 |
+| spconv-cu118 / cumm-cu118 | 2.3.6 / 0.4.11 |
+| torch-scatter | 2.1.2+pt21cu118 |
+| Open3D | 0.19.0 |
 
-**Important:** OneFormer3D's published Dockerfile uses an older environment and MMDetection3D 1.1.0-era code. This project records the *author's actual installed MMDetection3D 1.4.0* instead. The original `pip freeze` also contained an editable entry pointing into the author's local `site-packages`; that machine-specific reference is deliberately **not** included here. The exact MMDetection3D source revision and any local modifications still need to be documented. CUDA extensions are especially sensitive to platform and compiler versions.
-
-## Installation (Windows / NVIDIA CUDA 11.8)
-
-Commands below use **PowerShell**. Linux installation may require different build steps.
-
-### 1. Clone and create the base Conda environment
+### Installation (Windows PowerShell)
 
 ```powershell
 git clone https://github.com/z805947004-ship-it/GAMQ-SegNet.git
@@ -71,101 +56,59 @@ cd GAMQ-SegNet
 conda env create -f environment.yml
 conda activate gamq-segnet
 python -m pip install -r requirements.txt
-```
-
-If Conda dependency solving fails, resolve the package-channel/build availability instead of silently switching PyTorch/CUDA versions. Keep PyTorch **2.1.2** and CUDA **11.8** for parity with the reported environment.
-
-### 2. Install and verify MMCV CUDA operations
-
-```powershell
 mim install "mmcv==2.1.0"
-```
-
-`mmcv` includes native operators. Depending on the current host platform, prebuilt binaries for this precise combination may not be available; **compilation with compatible CUDA/MSVC may be necessary**. Verify the installation before proceeding:
-
-```powershell
-python -c "import mmcv; from mmcv.ops import nms; print('MMCV', mmcv.__version__, 'native ops OK')"
-```
-
-### 3. Install sparse convolution and scatter extensions
-
-```powershell
 python -m pip install "spconv-cu118==2.3.6" "cumm-cu118==0.4.11"
 python -m pip install --no-index --find-links https://data.pyg.org/whl/torch-2.1.0+cu118.html "torch-scatter==2.1.2+pt21cu118"
 ```
 
-The PyG wheel index is for the **PyTorch 2.1 / CUDA 11.8** binary family; the URL uses `torch-2.1.0` even though the recorded patch release is PyTorch 2.1.2. Wheel availability varies by OS/Python architecture.
-
-### 4. Install MMDetection3D 1.4.0
-
-The working environment reported an **editable** MMDetection3D 1.4.0 install, but the exported editable path was local to the author's machine. To attempt a clean public installation, use the upstream source:
-
-```powershell
-cd ..
-git clone --branch v1.4.0 https://github.com/open-mmlab/mmdetection3d.git mmdetection3d-v1.4.0
-cd mmdetection3d-v1.4.0
-python -m pip install -v --no-deps -e .
-cd ..\GAMQ-SegNet
-```
-
-This **upstream v1.4.0 tag is a proposed clean-install reference**, not proof that the author's original editable installation was identical to that tag. If the code relies on locally modified MMDetection3D operators or APIs, document and publish the patch. Native extensions may need MSVC and a matching CUDA toolkit on Windows.
-
-### 5. Verify core dependencies
-
-```powershell
-python -c "import torch, mmcv, mmdet, mmengine, mmdet3d, spconv, torch_scatter; from mmcv.ops import nms; print('torch', torch.__version__, 'cuda', torch.version.cuda, 'available', torch.cuda.is_available()); print('mmcv', mmcv.__version__, 'mmdet', mmdet.__version__, 'mmdet3d', mmdet3d.__version__, 'mmengine', mmengine.__version__); print('CUDA extensions imported successfully')"
-```
-
-Successful imports do not by themselves prove full training/evaluation reproducibility. Run one actual training or inference smoke test using the dataset and checkpoint after installation.
+MMDetection3D **1.4.0** was used as an editable installation in the original environment. If it is not already installed, install a compatible MMDetection3D 1.4.0 source checkout. CUDA extensions on Windows may require matching MSVC/CUDA build tools. The provided environment files document the experimental setup; a clean installation has not been independently verified.
 
 ## Dataset
 
-The maize plant point cloud dataset used in this study is provided in the `data/` directory of this repository.
+The `data/` directory contains the processed XYZRGB maize point clouds and their segmentation annotations. The study used **108 plants**, divided **8:1:1** into **86 training, 11 validation, and 11 test plants**.
 
-The dataset is intended for the training and evaluation of GAMQ-SegNet for semantic and instance segmentation of maize plants.
+Each sample uses the same complete ID across three files:
 
-**Data Availability:** The dataset is included directly in this GitHub repository. No additional download from external cloud storage services is required.
+- `*_pts.npy` — point-cloud features (XYZRGB)
+- `*_sem.npy` — semantic labels (`0`: stem; `1`: leaf)
+- `*_ins.npy` — instance labels (stem instance `0`; leaves assigned individual instance IDs)
 
-Please refer to the dataset configuration files in `configs/` for the corresponding data loading settings.
+Preserve sample IDs exactly, including suffixes such as `1149-1(2)`. Check the annotation paths and dataset-root settings in `configs/oneformer3d_corn_formal_rgb_full.py` before running training or testing; use the paper's fixed split for evaluation.
 
 ## Training
 
+Training **does not require a pretrained checkpoint**:
+
 ```powershell
-python tools/train.py configs/oneformer3d_corn_formal_rgb_full.py --work-dir work_dirs/gamq_segnet
+python tools/train.py configs/oneformer3d_corn_formal_rgb_full.py --work-dir work_dirs/gamq_segnet_train
 ```
 
-The command follows the repository's reported training entry point; it must be verified with the released data paths and environment. Check the configuration for the actual training schedule, seed and model settings used in the article. Record the final checkpoint and relevant training log.
+The reported experiments used a batch size of **2**, a maximum of **800 epochs**, an initial learning rate of **5e-5**, and a voxel size of **0.01 m**.
 
 ## Evaluation
 
+The repository includes the **trained checkpoint selected for testing**, at:
+
+`work_dirs/oneformer3d-full-new/best_all_ap_50%_epoch_660.pth`
+
+This is an **evaluation/inference checkpoint produced by training**, not a pretrained initialization weight and **not required for training from scratch**.
+
 ```powershell
-python tools/test.py configs/oneformer3d_corn_formal_rgb_full.py "PATH_TO_CHECKPOINT.pth" --work-dir work_dirs/gamq_segnet_test
+python tools/test.py configs/oneformer3d_corn_formal_rgb_full.py "work_dirs/oneformer3d-full-new/best_all_ap_50%_epoch_660.pth" --work-dir work_dirs/gamq_segnet_test
 ```
 
-Use the **same trained checkpoint and data split as the paper**. Exported numerical results and their evaluation protocol should be published alongside the dataset or in the repository.
+Key results reported on the independent test set:
 
-A per-point prediction export utility is provided at `tools/infer_save_ply_corn.py`; consult its real command-line options before running it.
+| Metric | GAMQ-SegNet |
+|---|---:|
+| Stem IoU | 70.98% |
+| Leaf IoU | 94.64% |
+| mIoU | 82.81% |
+| AP | 64.01% |
+| PQ | 67.46% |
 
-## Pretrained models and results
+Results depend on the released evaluation configuration, dataset split, and checkpoint.
 
-- GAMQ-SegNet checkpoint: **TODO (URL, SHA256)**
-- Baselines and ablation models: **TODO (configurations and availability)**
-- Evaluation outputs and summary metrics: **TODO**
+## Acknowledgment
 
-Large datasets and model weights should be hosted separately (for example, on Zenodo) rather than tracked in ordinary Git commits.
-
-## Relationship to upstream software and license
-
-This work is derived from the [OneFormer3D repository](https://github.com/filaPro/oneformer3d) and its associated paper:
-
-> Kolodiazhnyi, M., Vorontsova, A., Konushin, A., and Rukhovich, D. **OneFormer3D: One Transformer for Unified Point Cloud Segmentation.** CVPR 2024. [Paper](https://arxiv.org/abs/2311.14405)
-
-Keep the required copyright notices and review the upstream license before licensing or redistributing modified upstream code. The presence of a `LICENSE` file in this repository does not establish that all third-party components share the same license.
-
-## Citation
-
-**TODO:** Insert the final GAMQ-SegNet paper's authors, title, venue, publication year, DOI and BibTeX when available. Please cite the original OneFormer3D publication when using the derived code.
-
-## Contact
-
-For reproducibility questions, please open a GitHub Issue. **TODO:** Add an approved author contact email if desired.
+This implementation is based on [OneFormer3D](https://github.com/filaPro/oneformer3d): *OneFormer3D: One Transformer for Unified Point Cloud Segmentation* (CVPR 2024). Please also follow the licenses and notices of the underlying libraries.
